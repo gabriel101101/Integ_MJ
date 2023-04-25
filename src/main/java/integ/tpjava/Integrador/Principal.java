@@ -14,43 +14,59 @@ import java.sql.*;
 public class Principal {
 
 	public static void main(String[] args){
+		
+		/* NOTA: utilize el archivo "resultados.csv" que se encuentra en la carpeta "archivos" del programa, 
+		 * para que el programa funcione correctamente. */
 
+		//CONFIG BD
+		String BD="jdbc:mysql://localhost:3306/mundial", DIR="root",CONT="";
+		
 	    Collection<Partido> partidosMundial = new ArrayList<Partido>();
-		String [][]Pronst_Resul= new String [10][100];
-		int a=0,b=1;
-
-	    Path pathResultados = Paths.get("C:\\tp-java\\gabriel\\res\\resultado.csv");
+	    Path pathResultados = Paths.get(args[0]);
 	    List<String> lineasResultados = null;
 	    
-	    
+		String [][]Pronst_Resul= new String [10][100];
+		String participante="", M_participante="",ronda="";
+		
+		int a=0,b=1,num=4,M_puntos=0, puntos=0;
+	
         try {
-
+        	
 	        lineasResultados = Files.readAllLines(pathResultados);
-	           
+	              
 	    } catch (IOException e) {
 	      System.out.println("No se pudo leer la linea de resultados...");
 	      System.out.println(e.getMessage());
 	      System.exit(1);
 	    }
 	    
-	    System.out.println("===================== RESULTADOS DE PARTIDOS ===================== \n");
+	    System.out.println("===================== RESULTADOS DEPORTIVOS ===================== \n");
 	    
 	    boolean primera = true;
 
 	    for (String lineaResultado : lineasResultados) {
-
+	    	
 	      if (primera) {
-	        primera = false;
-	      } else {
+	    	  String[] campos = lineaResultado.split(",");
+		      ronda=campos[0];
+	    	  System.out.println("-------------"+ronda+"---------------");
+	          primera = false; 	  
+	      }
+	      else{
 
 	        String[] campos = lineaResultado.split(",");
+	        if(campos.length!=5) { 
+		    	  System.out.println("ERROR DEL PROGRAMA : No coincide el numero de campos del archivo resultados. ");
+		    	  primera =true;
+	    		  break;
+		      }
 	        
-	        Equipo equipo1 = new Equipo(campos[0]);
-	        Equipo equipo2 = new Equipo(campos[3]);
+	        Equipo equipo1 = new Equipo(campos[1]);
+	        Equipo equipo2 = new Equipo(campos[4]);
 	        Partido partido = new Partido(equipo1,1,2,equipo2);
 	        
-	        partido.setGolesEquipo1(Integer.parseInt(campos[1]));
-	        partido.setGolesEquipo2(Integer.parseInt(campos[2]));
+	        partido.setGolesEquipo1(Integer.parseInt(campos[2]));
+	        partido.setGolesEquipo2(Integer.parseInt(campos[3]));
 	        
 	        System.out.println(equipo1.getNombre() + "  " + partido.getGolesEquipo1());
 	        System.out.println(" VS ");
@@ -60,19 +76,20 @@ public class Principal {
 	        partidosMundial.add(partido);
 	        
 	      }
-
 	    }
-	    
-	    a=0;b=3;primera = true;
-		int div=4,sum=1,puntos=0;// total puntos persona
-		String participante="";
+	    a=0;b=3;
 	    
 	    System.out.println("\n"+"===================== PRONOSTICOS DEPORTIVOS ======================="+"\n");
-	    	
+	    /* NOTA: Utilize el archivo "pronostico.csv" que se encuentra en la carpeta archivos
+		 * del programa para cargar la base de datos y asi el programa funcionara correctamente*/
+	    
 			try {
+				if(primera==true) {
+			    	BD=null;
+			    }
 				Connection miConexion;
 				
-				miConexion = DriverManager.getConnection("jdbc:mysql://localhost:3306/mundial","root","");
+				miConexion = DriverManager.getConnection(BD,DIR,CONT);
 				Statement miStatement = miConexion.createStatement(); 
 				ResultSet miResultset = miStatement.executeQuery("SELECT * FROM pronostico");
 				
@@ -98,7 +115,6 @@ public class Principal {
 				              && partidoCol.getEquipo2().getNombre().equals(equipo2.getNombre())) {
 
 				            partido = partidoCol;
-
 				          }
 				        }
 					 
@@ -108,15 +124,14 @@ public class Principal {
 				      if ("X".equals(Pronst_Resul[b+3][a])) {
 				          equipo = equipo1;
 				          resultado = ResultadoEnum.GANADOR;
-						  System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " + Pronst_Resul[b+2][a] + "---->" + resultado +
-						  ": " + equipo.getNombre());
-
+						  System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " +
+				          Pronst_Resul[b+2][a] + "---->" + resultado + ": " + equipo.getNombre());
 				        }
 				        if ("X".equals( Pronst_Resul[b+5][a])) {
 				          equipo = equipo1;
 				          resultado = ResultadoEnum.EMPATE;
-						  System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " + Pronst_Resul[b+2][a] + "---->" + resultado );
-
+						  System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " +
+				          Pronst_Resul[b+2][a] + "---->" + resultado );
 				        }
 				        if ("X".equals(Pronst_Resul[b+4][a])) {
 				          equipo = equipo1;
@@ -126,41 +141,45 @@ public class Principal {
 						if ("X".equals(Pronst_Resul[b+4][a])) {
 							equipo = equipo2;
 							resultado = ResultadoEnum.GANADOR;
-							System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " + Pronst_Resul[b+2][a] + "---->" + resultado +
-							": " + equipo.getNombre());
-			  
+							System.out.println("<*>"+Pronst_Resul[b+1][a] + " vs " +
+							Pronst_Resul[b+2][a] + "---->" + resultado + ": " + equipo.getNombre());
 						}
 						
-						 Pronostico pronostico = new Pronostico(equipo, partido, resultado);
-					        
+						 Pronostico pronostico = new Pronostico(equipo, partido, resultado);  
 					    // sumar los puntos correspondientes
 					     puntos += pronostico.puntos();
 						
 					     a++;
-					
-					if((a/div)==sum){
-					
-						//mostrar participante y los puntos obtenidos
-						
+					     
+					   while((a/num)==1){   
+						   //------------PUNTOS ESXTRA--------------------
+						   if(puntos==4){
+							   System.out.println("\n<+>"+participante+ " Hacerto todos los pronosticos y sumo 2 puntos extra.\n");
+							   puntos=puntos +2;
+						   }  
+						//---MOSTRAR PARTICIPANTE Y PUNTOS OBTENIDOS------------	
 						System.out.println("\n"+"Partcipante: " + participante);
-						System.out.println("Sus puntos fueron: " + puntos + "\n" +
+						System.out.println("Puntos Obtenidos: " + puntos + "\n" +
 						 "--------------------------------------------------------" + "\n");
-						div=div+4;
+						
+						//-------------MEJOR PUNTAJE----------------------
+						if(puntos > M_puntos) {
+							M_puntos=puntos;
+							M_participante=participante;	
+						}
+						num=num+4;
 						puntos=0;
-					  }
-				  
+					  }   
 				 }
+				 
+		    System.out.println("\n"+"PARTICIPANTE CON MAYOR PUNTAJE :" + M_participante +" con un total de "+M_puntos+" Puntos.");
 				
 			} catch (SQLException e) {
-				
-				//e.printStackTrace();
 				System.out.println("No se pudo leer la linea de pronosticos...");
-			    System.out.println(e.getMessage());
+				System.out.println(e.getMessage());
 			    System.exit(1);
 			}
-			
         
 	  }
-
 
 }
